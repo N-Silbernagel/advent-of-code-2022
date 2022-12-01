@@ -6,14 +6,10 @@ repositories {
     mavenCentral()
 }
 
-tasks {
-    sourceSets {
-        main {
-            java.srcDirs("src")
-        }
-    }
+tasks.test {
+    useJUnitPlatform()
+}
 
-    wrapper {
-        gradleVersion = "7.6"
-    }
+dependencies {
+    testImplementation(kotlin("test"))
 }
