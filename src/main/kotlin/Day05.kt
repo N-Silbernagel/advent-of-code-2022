@@ -101,7 +101,7 @@ fun main() {
         return answer
     }
 
-    val input = readInput("Day05")
+    val input = readFileAsList("Day05")
     println(part1(input))
     println(part2(input))
 

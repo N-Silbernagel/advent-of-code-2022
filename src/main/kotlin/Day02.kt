@@ -115,7 +115,7 @@ fun main() {
         return score
     }
 
-    val input = readInput("Day02")
+    val input = readFileAsList("Day02")
     println(part1(input))
     println(part2(input))
 }

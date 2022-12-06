@@ -66,7 +66,7 @@ fun main() {
         return sumOfPriorities
     }
 
-    val input = readInput("Day03")
+    val input = readFileAsList("Day03")
     println(part1(input))
     println(part2(input))
 
