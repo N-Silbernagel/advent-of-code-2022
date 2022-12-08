@@ -9,53 +9,10 @@ object Day08 {
         var visibleItems = 0
 
         for ((rowIndex, row) in input.withIndex()) {
-            for ((itemIndex, item) in row.withIndex()) {
-                val itemIsOnEdge = itemIndex == 0 || rowIndex == 0 || rowIndex == input.size - 1 || itemIndex == row.length - 1
-                if (itemIsOnEdge) {
-                    visibleItems++
-                    continue
-                }
+            for ((itemIndex, tree) in row.withIndex()) {
+                val isVisible = checkVisibility(itemIndex, rowIndex, input, row, tree.digitToInt())
 
-                var visibleFromTop = true
-                var visibleFromRight = true
-                var visibleFromBottom = true
-                var visibleFromLeft = true
-
-                for ((otherRowItemIndex, otherRowItem) in row.withIndex()) {
-                    if (otherRowItem.digitToInt() < item.digitToInt()) continue
-
-                    if (otherRowItemIndex < itemIndex) {
-                        visibleFromLeft = false
-                    }
-
-                    if (otherRowItemIndex > itemIndex) {
-                        visibleFromRight = false
-                    }
-
-                    if (!visibleFromLeft && !visibleFromRight) {
-                        break
-                    }
-                }
-
-                for ((otherColItemIndex, innerRow) in input.withIndex()) {
-                    val otherColItem = innerRow[itemIndex]
-
-                    if (otherColItem.digitToInt() < item.digitToInt()) continue
-
-                    if (otherColItemIndex < rowIndex) {
-                        visibleFromTop = false
-                    }
-
-                    if (otherColItemIndex > rowIndex) {
-                        visibleFromBottom = false
-                    }
-
-                    if (!visibleFromTop && !visibleFromBottom) {
-                        break
-                    }
-                }
-
-                if (visibleFromTop || visibleFromRight || visibleFromBottom || visibleFromLeft) {
+                if (isVisible) {
                     visibleItems++
                 }
             }
@@ -68,66 +25,14 @@ object Day08 {
         var bestScenicScore = 0
 
         for ((rowIndex, row) in input.withIndex()) {
-            for ((itemIndex, item) in row.withIndex()) {
-                val itemIsOnEdge = itemIndex == 0 || rowIndex == 0 || rowIndex == input.size - 1 || itemIndex == row.length - 1
+            for ((treeIndex, tree) in row.withIndex()) {
+                val itemIsOnEdge = treeIndex == 0 || rowIndex == 0 || rowIndex == input.size - 1 || treeIndex == row.length - 1
                 if (itemIsOnEdge) {
-                    // 0 scenic score -> not gonna be the biggest
+                    // 0 scenic score because of multiplication -> not gonna be the biggest
                     continue
                 }
 
-                var scenicScoreLeft = 0
-                for (otherRowItemIndex in 0 until itemIndex) {
-                    val otherRowItem = row[otherRowItemIndex]
-                    if (otherRowItem.digitToInt() >= item.digitToInt()) {
-                        scenicScoreLeft = 1
-                    }
-
-                    if (otherRowItem.digitToInt() < item.digitToInt()) {
-                        scenicScoreLeft++
-                    }
-                }
-
-                var scenicScoreRight = 0
-                for (otherRowItemIndex in (itemIndex+1) until row.length) {
-                    val otherRowItem = row[otherRowItemIndex]
-
-                    if (otherRowItem.digitToInt() >= item.digitToInt()) {
-                        scenicScoreRight++
-                        break
-                    }
-
-                    if (otherRowItem.digitToInt() < item.digitToInt()) {
-                        scenicScoreRight++
-                    }
-                }
-
-                var scenicScoreTop = 0
-                for (otherColItemIndex in 0 until rowIndex) {
-                    val otherColItem = input[otherColItemIndex][itemIndex]
-                    if (otherColItem.digitToInt() >= item.digitToInt()) {
-                        scenicScoreTop = 1
-                    }
-
-                    if (otherColItem.digitToInt() < item.digitToInt()) {
-                        scenicScoreTop++
-                    }
-                }
-
-                var scenicScoreBottom = 0
-                for (otherColItemIndex in (rowIndex+1) until input.size) {
-                    val otherColItem = input[otherColItemIndex][itemIndex]
-
-                    if (otherColItem.digitToInt() >= item.digitToInt()) {
-                        scenicScoreBottom++
-                        break
-                    }
-
-                    if (otherColItem.digitToInt() < item.digitToInt()) {
-                        scenicScoreBottom++
-                    }
-                }
-
-                val scenicScore = scenicScoreTop * scenicScoreRight * scenicScoreBottom * scenicScoreLeft
+                val scenicScore = calculateScenicScore(treeIndex, row, tree.digitToInt(), rowIndex, input)
 
                 if (scenicScore > bestScenicScore) {
                     bestScenicScore = scenicScore
@@ -136,5 +41,108 @@ object Day08 {
         }
 
         return bestScenicScore
+    }
+
+    private fun checkVisibility(
+        itemIndex: Int,
+        rowIndex: Int,
+        input: List<String>,
+        row: String,
+        item: Int
+    ): Boolean {
+        val itemIsOnEdge = itemIndex == 0 || rowIndex == 0 || rowIndex == input.size - 1 || itemIndex == row.length - 1
+        if (itemIsOnEdge) {
+            return true
+        }
+
+        var visibleFromRight = true
+        var visibleFromLeft = true
+        for ((otherRowItemIndex, otherRowItem) in row.withIndex()) {
+            if (otherRowItem.digitToInt() < item) continue
+
+            if (otherRowItemIndex < itemIndex) {
+                visibleFromLeft = false
+            }
+
+            if (otherRowItemIndex > itemIndex) {
+                visibleFromRight = false
+            }
+
+            if (!visibleFromLeft && !visibleFromRight) {
+                break
+            }
+        }
+
+        var visibleFromTop = true
+        var visibleFromBottom = true
+        for ((otherColItemIndex, innerRow) in input.withIndex()) {
+            val otherColItem = innerRow[itemIndex]
+
+            if (otherColItem.digitToInt() < item) continue
+
+            if (otherColItemIndex < rowIndex) {
+                visibleFromTop = false
+            }
+
+            if (otherColItemIndex > rowIndex) {
+                visibleFromBottom = false
+            }
+
+            if (!visibleFromTop && !visibleFromBottom) {
+                break
+            }
+        }
+
+        return visibleFromTop || visibleFromRight || visibleFromBottom || visibleFromLeft
+    }
+
+    private fun calculateScenicScore(
+        treeIndex: Int,
+        row: String,
+        tree: Int,
+        rowIndex: Int,
+        input: List<String>
+    ): Int {
+        var scenicScoreLeft = 0
+        for (otherRowItemIndex in (treeIndex - 1) downTo 0) {
+            val otherRowItem = row[otherRowItemIndex]
+
+            scenicScoreLeft++
+            if (otherRowItem.digitToInt() >= tree) {
+                break
+            }
+        }
+
+        var scenicScoreRight = 0
+        for (otherRowItemIndex in (treeIndex + 1) until row.length) {
+            val otherRowItem = row[otherRowItemIndex]
+
+            scenicScoreRight++
+            if (otherRowItem.digitToInt() >= tree) {
+                break
+            }
+        }
+
+        var scenicScoreTop = 0
+        for (otherColItemIndex in (rowIndex - 1) downTo 0) {
+            val otherColItem = input[otherColItemIndex][treeIndex]
+
+            scenicScoreTop++
+            if (otherColItem.digitToInt() >= tree) {
+                break
+            }
+        }
+
+        var scenicScoreBottom = 0
+        for (otherColItemIndex in (rowIndex + 1) until input.size) {
+            val otherColItem = input[otherColItemIndex][treeIndex]
+
+            scenicScoreBottom++
+            if (otherColItem.digitToInt() >= tree) {
+                break
+            }
+        }
+
+        return scenicScoreTop * scenicScoreRight * scenicScoreBottom * scenicScoreLeft
     }
 }
