@@ -1,10 +1,10 @@
 import java.util.*
-import kotlin.collections.HashSet
 import kotlin.math.abs
 
 fun main() {
     val input = readFileAsList("Day15")
-    println(Day15.part2(input, 4_000_000))
+    println(Day15.part1(input, 10))
+    println(Day15.part2(input, 4000000))
 }
 
 object Day15 {
@@ -21,28 +21,24 @@ object Day15 {
 
         val searchRange = 0..searchLength
         for (lookupY in searchRange) {
-            var coveredXsAtY = HashSet<Int>()
-            for (sensor in sensors) {
-                val radiusAtY = sensor.coveredDistance - abs(lookupY - sensor.y)
-                for(i in sensor.x - radiusAtY..sensor.x + radiusAtY) {
-                    if (i in searchRange) {
-                        coveredXsAtY.add(i)
-                    }
+            var lookupX = 0
+            while (lookupX < searchLength) {
+                val coveringSensor = sensors.firstOrNull { sensor ->
+                    val vector = Vector(lookupX, lookupY)
+                    val distanceToSensor = vector distanceTo sensor.position
+                    distanceToSensor <= sensor.coveredDistance
                 }
-            }
 
-            if (coveredXsAtY.size <= searchLength) {
-                for ((index, coveredX) in coveredXsAtY.withIndex()) {
-                    if (index != coveredX) {
-                        return 4_000_000L * index + lookupY
-                    }
+                if (coveringSensor == null) {
+                    return return 4_000_000L * lookupX + lookupY
                 }
+
+                val rangeAtY = coveringSensor.coveredDistance - abs(lookupY - coveringSensor.y)
+                lookupX = coveringSensor.x + rangeAtY + 1
             }
 
             println(lookupY)
         }
-
-
 
         return 0
     }
@@ -79,22 +75,13 @@ object Day15 {
                 .substringBefore(",")
                 .toInt()
 
-            val distanceX = abs(sensorX - beaconX)
-            val distanceY = abs(sensorY - beaconY)
-            val manhattanDistance = distanceX + distanceY
-
             val sensorPosition = Vector(sensorX, sensorY)
-            val sensor = Sensor(sensorPosition, manhattanDistance)
+            val beaconPosition = Vector(beaconX, beaconY)
+            val sensor = Sensor(sensorPosition, sensorPosition distanceTo beaconPosition)
             sensors.add(sensor)
         }
         return sensors
     }
 
-    data class Sensor(val position: Vector, val coveredDistance: Int) {
-        val x
-            get() = position.x
-
-        val y
-            get() = position.y
-    }
+    data class Sensor(val position: Vector, val coveredDistance: Int): Position by position
 }
