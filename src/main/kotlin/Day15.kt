@@ -1,16 +1,66 @@
-import java.util.TreeMap
-import java.util.TreeSet
+import java.util.*
+import kotlin.collections.HashSet
 import kotlin.math.abs
 
 fun main() {
     val input = readFileAsList("Day15")
-    println(Day15.part1(input, 2000000))
-    println(Day15.part2(input))
+    println(Day15.part2(input, 4_000_000))
 }
 
 object Day15 {
     fun part1(input: List<String>, lookupY: Int): Int {
-        val coveredPoints = TreeMap<Int, TreeSet<Int>>()
+        val sensors = parseSensors(input)
+
+        val coveredXsAtY = coveredXsAtYBySensors(sensors, lookupY)
+
+        return coveredXsAtY.size - 1
+    }
+
+    fun part2(input: List<String>, searchLength: Int): Long {
+        val sensors = parseSensors(input)
+
+        val searchRange = 0..searchLength
+        for (lookupY in searchRange) {
+            var coveredXsAtY = HashSet<Int>()
+            for (sensor in sensors) {
+                val radiusAtY = sensor.coveredDistance - abs(lookupY - sensor.y)
+                for(i in sensor.x - radiusAtY..sensor.x + radiusAtY) {
+                    if (i in searchRange) {
+                        coveredXsAtY.add(i)
+                    }
+                }
+            }
+
+            if (coveredXsAtY.size <= searchLength) {
+                for ((index, coveredX) in coveredXsAtY.withIndex()) {
+                    if (index != coveredX) {
+                        return 4_000_000L * index + lookupY
+                    }
+                }
+            }
+
+            println(lookupY)
+        }
+
+
+
+        return 0
+    }
+
+    private fun coveredXsAtYBySensors(
+        sensors: MutableSet<Sensor>,
+        lookupY: Int
+    ): TreeSet<Int> {
+        val coveredXsAtY = TreeSet<Int>()
+        for (sensor in sensors) {
+            val radiusAtY = sensor.coveredDistance - abs(lookupY - sensor.y)
+            coveredXsAtY.addAll((sensor.x - radiusAtY)..sensor.x + radiusAtY)
+        }
+        return coveredXsAtY
+    }
+
+    private fun parseSensors(input: List<String>): MutableSet<Sensor> {
+        val sensors = mutableSetOf<Sensor>()
 
         for (inputLine in input) {
             val (sensorDesc, beaconDesc) = inputLine.split(": ")
@@ -33,34 +83,18 @@ object Day15 {
             val distanceY = abs(sensorY - beaconY)
             val manhattanDistance = distanceX + distanceY
 
-            val leftMostCoveredX = sensorX - manhattanDistance
-            val rightMostCoveredX = sensorX + manhattanDistance
-            for (x in leftMostCoveredX..rightMostCoveredX) {
-                val heightAtX = height(x - sensorX, manhattanDistance)
-
-                for (y in -heightAtX..heightAtX) {
-                    val row = coveredPoints.computeIfAbsent(y) { TreeSet() }
-                    row.add(x)
-                }
-            }
+            val sensorPosition = Vector(sensorX, sensorY)
+            val sensor = Sensor(sensorPosition, manhattanDistance)
+            sensors.add(sensor)
         }
-
-        val lookupRow = coveredPoints.getOrDefault(lookupY, TreeSet())
-
-        return lookupRow.size
+        return sensors
     }
 
-    fun part2(input: List<String>): Int {
-        return 0
+    data class Sensor(val position: Vector, val coveredDistance: Int) {
+        val x
+            get() = position.x
+
+        val y
+            get() = position.y
     }
-
-    fun height(x: Int, manhattenDistance: Int): Int {
-        if (x < 0) {
-            return manhattenDistance + x
-        }
-
-        return manhattenDistance - x
-    }
-
-    data class Sensor(val vector: Vector, val coveredDistance: Int)
 }

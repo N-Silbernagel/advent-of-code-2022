@@ -32,9 +32,10 @@ class Day15Test: StringSpec ({
     "part 2 test input" {
         val output = Day15.part2(
             testInput
-                .lines()
+                .lines(),
+            20
         )
 
-        output shouldBe 93
+        output shouldBe 56000011
     }
 })
