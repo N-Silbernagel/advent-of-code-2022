@@ -24,7 +24,7 @@ object Day15 {
             var lookupX = 0
             while (lookupX < searchLength) {
                 val coveringSensor = sensors.firstOrNull { sensor ->
-                    val vector = Vector(lookupX, lookupY)
+                    val vector = Vector2d(lookupX, lookupY)
                     val distanceToSensor = vector distanceTo sensor.position
                     distanceToSensor <= sensor.coveredDistance
                 }
@@ -75,13 +75,13 @@ object Day15 {
                 .substringBefore(",")
                 .toInt()
 
-            val sensorPosition = Vector(sensorX, sensorY)
-            val beaconPosition = Vector(beaconX, beaconY)
+            val sensorPosition = Vector2d(sensorX, sensorY)
+            val beaconPosition = Vector2d(beaconX, beaconY)
             val sensor = Sensor(sensorPosition, sensorPosition distanceTo beaconPosition)
             sensors.add(sensor)
         }
         return sensors
     }
 
-    data class Sensor(val position: Vector, val coveredDistance: Int): Position by position
+    data class Sensor(val position: Vector2d, val coveredDistance: Int): Position2d by position
 }

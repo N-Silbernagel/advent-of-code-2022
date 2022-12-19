@@ -6,7 +6,7 @@ fun main() {
 
 object Day17 {
     private const val chamberWidth = 7
-    private val downMovementVector = Vector(0, -1)
+    private val downMovementVector = Vector2d(0, -1)
 
     fun part1(input: List<String>): Long {
         val jetMovements = parseJetPattern(input)
@@ -23,7 +23,7 @@ object Day17 {
     private fun simulate(jetMovements: JetMovements, numberOfRocks: Long, length: Int): Long {
 
         val fallenRocks = LinkedHashSet<Rock>()
-        var currentRock = RockSource.next(Vector(2, 3))
+        var currentRock = RockSource.next(Vector2d(2, 3))
 
         val seen = LinkedHashMap<Pair<Int, Int>, Int>()
         var currentRockStreamCombo = -1 to -1
@@ -36,7 +36,7 @@ object Day17 {
 
             if (fallenRocks.contains(currentRock)) {
                 val currentHighestPoint = calculateHighestPoint(fallenRocks)
-                currentRock = RockSource.next(Vector(2, currentHighestPoint + 3))
+                currentRock = RockSource.next(Vector2d(2, currentHighestPoint + 3))
 
                 currentRockStreamCombo = fallenRocks.size % 5 to jetStreams % length
                 if (seen.contains(currentRockStreamCombo)) {
@@ -101,7 +101,7 @@ object Day17 {
     private fun checkCollisionMany(
         currentRock: Rock,
         fallenRocks: MutableSet<Rock>,
-        position: Position
+        position: Position2d
     ): Boolean {
         var isCollision = false
         for (fallenRock in fallenRocks.reversed()) {
@@ -125,7 +125,7 @@ object Day17 {
         return JetMovements(jetPattern)
     }
 
-    private fun checkCollision(rock: Rock, otherRock: Rock?, movementVector: Position): Boolean {
+    private fun checkCollision(rock: Rock, otherRock: Rock?, movementVector: Position2d): Boolean {
         val nextRockVector = rock.position + movementVector
 
         if (nextRockVector.y < 0) {
@@ -151,77 +151,77 @@ object Day17 {
     }
 
     abstract class Rock {
-        abstract val shape: List<Vector>
+        abstract val shape: List<Vector2d>
         abstract val width: Int
         abstract val height: Int
-        abstract var position: Position
+        abstract var position: Position2d
     }
 
-    class MinusRock(override var position: Position) : Rock() {
+    class MinusRock(override var position: Position2d) : Rock() {
         override val width = 4
         override val height = 1
 
         override val shape = listOf(
-            Vector(0, 0),
-            Vector(1, 0),
-            Vector(2, 0),
-            Vector(3, 0),
+            Vector2d(0, 0),
+            Vector2d(1, 0),
+            Vector2d(2, 0),
+            Vector2d(3, 0),
         )
     }
 
-    class PlusRock(override var position: Position) : Rock() {
+    class PlusRock(override var position: Position2d) : Rock() {
         override val width = 3
         override val height = 3
 
         override val shape = listOf(
-            Vector(1, 0),
-            Vector(0, 1),
-            Vector(1, 1),
-            Vector(2, 1),
-            Vector(1, 2),
+            Vector2d(1, 0),
+            Vector2d(0, 1),
+            Vector2d(1, 1),
+            Vector2d(2, 1),
+            Vector2d(1, 2),
         )
     }
 
-    class LRock(override var position: Position) : Rock() {
+    class LRock(override var position: Position2d) : Rock() {
         override val width = 3
         override val height = 3
 
         override val shape = listOf(
-            Vector(0, 0),
-            Vector(1, 0),
-            Vector(2, 0),
-            Vector(2, 1),
-            Vector(2, 2),
+            Vector2d(0, 0),
+            Vector2d(1, 0),
+            Vector2d(2, 0),
+            Vector2d(2, 1),
+            Vector2d(2, 2),
         )
     }
 
-    class IRock(override var position: Position) : Rock() {
+    class IRock(override var position: Position2d) : Rock() {
         override val width = 1
         override val height = 4
 
         override val shape = listOf(
-            Vector(0, 0),
-            Vector(0, 1),
-            Vector(0, 2),
-            Vector(0, 3),
+            Vector2d(0, 0),
+            Vector2d(0, 1),
+            Vector2d(0, 2),
+            Vector2d(0, 3),
         )
     }
 
-    class BlockRock(override var position: Position) : Rock() {
+    class BlockRock(override var position: Position2d) : Rock() {
         override val width = 2
         override val height = 2
 
         override val shape = listOf(
-            Vector(0, 0),
-            Vector(0, 1),
-            Vector(1, 0),
-            Vector(1, 1),
+            Vector2d(0, 0),
+            Vector2d(0, 1),
+            Vector2d(1, 0),
+            Vector2d(1, 1),
         )
     }
 
-    enum class JetDirection(val vector: Vector) {
-        LEFT(Vector(-1, 0)),
-        RIGHT(Vector(1, 0));
+    enum class JetDirection(val vector: Vector2d) {
+        LEFT(Vector2d(-1, 0)),
+        RIGHT(Vector2d(1, 0));
 
         companion object {
             fun fromString(s: String): JetDirection {
@@ -241,7 +241,7 @@ object Day17 {
     object RockSource {
         private var index = 0
 
-        fun next(startingPosition: Position): Rock {
+        fun next(startingPosition: Position2d): Rock {
             index++
             if (index % 5 == 1) {
                 return MinusRock(startingPosition)

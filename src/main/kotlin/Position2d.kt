@@ -1,24 +1,24 @@
 import kotlin.math.abs
 
-interface Position {
+interface Position2d {
     val x: Int
     val y: Int
 
-    operator fun plus(other: Position): Position {
-        return Vector(x + other.x, y+other.y)
+    operator fun plus(other: Position2d): Position2d {
+        return Vector2d(x + other.x, y+other.y)
     }
 
     /**
      * Calculate manhattan distance between two vectors
      */
-    infix fun distanceTo(other: Position): Int {
+    infix fun distanceTo(other: Position2d): Int {
         val diff = this diff other
         return diff.x + diff.y
     }
 
-    infix fun diff(other: Position): Position {
+    infix fun diff(other: Position2d): Position2d {
         val distanceX = abs(x - other.x)
         val distanceY = abs(y - other.y)
-        return Vector(distanceX, distanceY)
+        return Vector2d(distanceX, distanceY)
     }
 }
