@@ -26,6 +26,6 @@ class Day24Test: StringSpec ({
                 .lines(),
         )
 
-        output shouldBe 301
+        output shouldBe 54
     }
 })

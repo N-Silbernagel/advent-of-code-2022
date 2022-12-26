@@ -11,10 +11,34 @@ object Day24 {
     private val start = Vector2d(2, 1)
 
     fun part1(input: List<String>): Long {
-        val maxXBlizzard = input[0].length - 1
-        val maxYBlizzard = input.size - 1
-        val goal = Vector2d(maxXBlizzard, maxYBlizzard + 1)
+        val (maxXBlizzard, maxYBlizzard, goal) = calculateMapConstraints(input)
 
+        val blizzardsUnique = findUniqueBlizzards(input, maxXBlizzard, maxYBlizzard)
+
+        val bestPath = findPath(goal, blizzardsUnique, maxXBlizzard, maxYBlizzard, Path(listOf(start)))
+
+        return bestPath.size - 1L
+    }
+
+    fun part2(input: List<String>): Long {
+        val (maxXBlizzard, maxYBlizzard, goal) = calculateMapConstraints(input)
+
+        val blizzardsUnique = findUniqueBlizzards(input, maxXBlizzard, maxYBlizzard)
+
+        var pathOne = findPath(goal, blizzardsUnique, maxXBlizzard, maxYBlizzard, Path(listOf(start)))
+
+        pathOne = findPath(start, blizzardsUnique, maxXBlizzard, maxYBlizzard, pathOne)
+
+        pathOne = findPath(goal, blizzardsUnique, maxXBlizzard, maxYBlizzard, pathOne)
+
+        return pathOne.size - 1L
+    }
+
+    private fun findUniqueBlizzards(
+        input: List<String>,
+        maxXBlizzard: Int,
+        maxYBlizzard: Int
+    ): MutableSet<Set<Blizzard>> {
         val blizzards = parseBlizzards(input)
 
         val blizzardsUnique = mutableSetOf<Set<Blizzard>>(blizzards)
@@ -27,25 +51,33 @@ object Day24 {
             }
             blizzardsUnique.add(next)
         }
+        return blizzardsUnique
+    }
 
-        val paths = ArrayDeque<Path>()
-        paths.add(Path(listOf(start)))
-
-        val seen = mutableSetOf<Pair<Position2d, Set<Blizzard>>>(start to blizzards)
-        while (paths.isNotEmpty()) {
-            val path = paths.removeFirst()
+    private fun findPath(
+        goal: Vector2d,
+        blizzardsUnique: MutableSet<Set<Blizzard>>,
+        maxXBlizzard: Int,
+        maxYBlizzard: Int,
+        startPath: Path
+    ): Path {
+        val queue = ArrayDeque<Path>()
+        queue.add(startPath)
+        val seenOne = mutableSetOf<Pair<Position2d, Set<Blizzard>>>()
+        while (queue.isNotEmpty()) {
+            val path = queue.removeFirst()
 
             val currentPosition = path.positions.last()
             if (currentPosition == goal) {
-                return path.positions.size - 1L
+                return path
             }
             val currentBlizzards = getNextBlizzardPositions(path, blizzardsUnique)
 
             val positionBlizzardsPair = currentPosition to currentBlizzards
-            if (seen.contains(positionBlizzardsPair)) {
+            if (seenOne.contains(positionBlizzardsPair)) {
                 continue
             }
-            seen.add(positionBlizzardsPair)
+            seenOne.add(positionBlizzardsPair)
 
             val currentBlizzardPositions = currentBlizzards.map { it.position }.toSet()
 
@@ -67,30 +99,32 @@ object Day24 {
 
             if (downIsValid) {
                 val newPath = Path(path.positions + down)
-                paths.add(newPath)
+                queue.add(newPath)
             }
             if (rightIsValid) {
                 val newPath = Path(path.positions + right)
-                paths.add(newPath)
+                queue.add(newPath)
             }
             if (upIsValid) {
                 val newPath = Path(path.positions + up)
-                paths.add(newPath)
+                queue.add(newPath)
             }
             if (leftIsValid) {
                 val newPath = Path(path.positions + left)
-                paths.add(newPath)
+                queue.add(newPath)
             }
             if (!currentIsBlizzard) {
-                paths.add(Path(path.positions + currentPosition))
+                queue.add(Path(path.positions + currentPosition))
             }
         }
-
-        return -1
+        throw RuntimeException("Could not find path")
     }
 
-    fun part2(input: List<String>): Long {
-        return 0
+    private fun calculateMapConstraints(input: List<String>): Triple<Int, Int, Vector2d> {
+        val maxXBlizzard = input[0].length - 1
+        val maxYBlizzard = input.size - 1
+        val goal = Vector2d(maxXBlizzard, maxYBlizzard + 1)
+        return Triple(maxXBlizzard, maxYBlizzard, goal)
     }
 
     private fun getNextBlizzardPositions(
@@ -162,5 +196,5 @@ object Day24 {
         LEFT(Vector2d(-1, 0))
     }
 
-    data class Path(val positions: List<Position2d>)
+    data class Path(val positions: List<Position2d>): List<Position2d> by positions
 }
