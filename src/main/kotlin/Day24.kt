@@ -25,13 +25,13 @@ object Day24 {
 
         val blizzardsUnique = findUniqueBlizzards(input, maxXBlizzard, maxYBlizzard)
 
-        var pathOne = findPath(goal, blizzardsUnique, maxXBlizzard, maxYBlizzard, Path(listOf(start)))
+        var path = findPath(goal, blizzardsUnique, maxXBlizzard, maxYBlizzard, Path(listOf(start)))
 
-        pathOne = findPath(start, blizzardsUnique, maxXBlizzard, maxYBlizzard, pathOne)
+        path = findPath(start, blizzardsUnique, maxXBlizzard, maxYBlizzard, path)
 
-        pathOne = findPath(goal, blizzardsUnique, maxXBlizzard, maxYBlizzard, pathOne)
+        path = findPath(goal, blizzardsUnique, maxXBlizzard, maxYBlizzard, path)
 
-        return pathOne.size - 1L
+        return path.size - 1L
     }
 
     private fun findUniqueBlizzards(
