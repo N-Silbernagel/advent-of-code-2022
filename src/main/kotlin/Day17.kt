@@ -1,7 +1,9 @@
+import kotlin.reflect.KClass
+
 fun main() {
     val input = readFileAsList("Day17")
     println(Day17.part1(input))
-    //println(Day17.part2(input))
+    println(Day17.part2(input))
 }
 
 object Day17 {
@@ -11,39 +13,52 @@ object Day17 {
     fun part1(input: List<String>): Long {
         val jetMovements = parseJetPattern(input)
 
-        return simulate(jetMovements, 2_022, input[0].length)
+        return simulate(jetMovements, 2_022)
     }
 
     fun part2(input: List<String>): Long {
         val jetMovements = parseJetPattern(input)
 
-        return simulate(jetMovements, 1_000_000_000_000, input[0].length)
+        return simulate(jetMovements, 1_000_000_000_000)
     }
 
-    private fun simulate(jetMovements: JetMovements, numberOfRocks: Long, length: Int): Long {
-
+    private fun simulate(jetMovements: JetMovements, numberOfRocks: Long): Long {
+        val rockSource = RockSource()
         val fallenRocks = LinkedHashSet<Rock>()
-        var currentRock = RockSource.next(Vector2d(2, 3))
+        var currentRock = rockSource.next(Vector2d(2, 3))
 
-        val seen = LinkedHashMap<Pair<Int, Int>, Int>()
-        var currentRockStreamCombo = -1 to -1
-        var jetStreams = 0
-        var cylceStart: Pair<Int, Int>? = null
-        seen[currentRockStreamCombo] = 0
+        val seen = LinkedHashMap<State, Pair<Int, Int>>()
+        var currentState = State(MinusRock::class, 0, listOf())
+        var cycleStart: State? = null
+        seen[currentState] = 0 to 0
         while (fallenRocks.size < numberOfRocks) {
-            val jetDirection = jetMovements.next()
-            jetStreams++
+            val (jetDirection, jetIndex) = jetMovements.next()
+
+
+
+            val currentHighestPoint = calculateHighestPoint(fallenRocks)
+            val groupBy = fallenRocks.groupBy { it.position.x }
+            val sortedByDescending = groupBy
+                .entries
+                .sortedBy { it.key }
+            val map = sortedByDescending
+                .map { pointList -> pointList.value.maxBy { point -> point.position.y + point.height } }
+            val ceiling = map
+                .let {
+                    it.map { point -> currentHighestPoint - (point.position.y + point.height) }
+                }
+
+            currentState = State(currentRock::class, jetIndex, ceiling)
+            if (seen.contains(currentState)) {
+                cycleStart = currentState
+                break
+            }
+            seen[currentState] = fallenRocks.size to currentHighestPoint
+
+
 
             if (fallenRocks.contains(currentRock)) {
-                val currentHighestPoint = calculateHighestPoint(fallenRocks)
-                currentRock = RockSource.next(Vector2d(2, currentHighestPoint + 3))
-
-                currentRockStreamCombo = fallenRocks.size % 5 to jetStreams % length
-                if (seen.contains(currentRockStreamCombo)) {
-                    cylceStart = currentRockStreamCombo
-                    break
-                }
-                seen[currentRockStreamCombo] = currentHighestPoint
+                currentRock = rockSource.next(Vector2d(2, currentHighestPoint + 3))
             }
 
             val isCollisionVertical = checkCollisionMany(currentRock, fallenRocks, jetDirection.vector)
@@ -67,32 +82,26 @@ object Day17 {
             currentRock.position = currentRock.position + downMovementVector
         }
 
-        if (cylceStart != null) {
-            val indexOfCycleStart = seen.keys.indexOf(cylceStart)
-            val indexOfCycleEnd = seen.keys.indexOf(seen.keys.last())
-            val cycleSize = indexOfCycleEnd - indexOfCycleStart + 1
+        if (cycleStart != null) {
+            val (rockCountCycleStart, heightBeforeCycle) = seen[cycleStart]!!
+            val (rockCountCycleEnd, cycleEndHeight) = seen.values.last()
 
-            val keyBeforeCycle = seen.keys.toList()[indexOfCycleStart - 1]
-            val heightBeforeCycle = seen[keyBeforeCycle]!!
-
-            val cycleEndHeight = seen.values.last()
+            val cycleSize = rockCountCycleEnd - rockCountCycleStart + 1
 
             val cycleHeightDiff = cycleEndHeight - heightBeforeCycle
 
             val remainingRocks = numberOfRocks - fallenRocks.size
 
             val cyclesRemaining = remainingRocks / cycleSize
-            val rest = remainingRocks % cycleSize
+            val remainder = remainingRocks % cycleSize
 
-            val currentHeight = calculateHighestPoint(fallenRocks)
             val heightTroughCycles = cyclesRemaining * cycleHeightDiff
 
-            val restKey = seen.keys.toList()[indexOfCycleStart + rest.toInt()]
-            val restHeight = seen[restKey]!!
-            val heightThroughRestRocks = restHeight - heightBeforeCycle
+            val remainderKey = seen.keys.toList()[rockCountCycleStart + remainder.toInt()]
+            val (_, remainderHeight) = seen[remainderKey]!!
+            val heightThroughRemainderRocks = remainderHeight - heightBeforeCycle
 
-            val joinedHeight = currentHeight + heightTroughCycles + heightThroughRestRocks
-            return joinedHeight
+            return cycleEndHeight + heightTroughCycles + heightThroughRemainderRocks
         }
 
         return calculateHighestPoint(fallenRocks).toLong()
@@ -113,8 +122,10 @@ object Day17 {
         return isCollision
     }
 
-    private fun calculateHighestPoint(fallenRocks: MutableSet<Rock>) =
-        fallenRocks.map { it.position.y + it.height }.maxByOrNull { it } ?: 0
+    private fun calculateHighestPoint(fallenRocks: MutableSet<Rock>): Int {
+        val maxByOrNull = fallenRocks.maxByOrNull { it.position.y + it.height } ?: return 0
+        return maxByOrNull.position.y + maxByOrNull.height
+    }
 
     private fun parseJetPattern(input: List<String>): JetMovements {
         val jetPattern = input[0]
@@ -238,7 +249,7 @@ object Day17 {
         }
     }
 
-    object RockSource {
+    class RockSource {
         private var index = 0
 
         fun next(startingPosition: Position2d): Rock {
@@ -267,20 +278,24 @@ object Day17 {
         }
     }
 
-    class JetMovements(private val pattern: List<JetDirection>) : Iterator<JetDirection> {
+    class JetMovements(private val pattern: List<JetDirection>) : Iterator<JetMovement> {
         private var index = 0
 
         override fun hasNext(): Boolean {
             return true
         }
 
-        override fun next(): JetDirection {
+        override fun next(): JetMovement {
             val jetDirection = pattern[index]
             index++
             if (index !in pattern.indices) {
                 index = 0
             }
-            return jetDirection
+            return JetMovement(jetDirection, index)
         }
     }
+
+    data class JetMovement(val direction: JetDirection, val index: Int)
+
+    data class State(val rock: KClass<out Rock>, val jetIndex: Int, val ceiling: List<Int>)
 }
