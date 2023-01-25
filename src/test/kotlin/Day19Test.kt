@@ -22,6 +22,6 @@ class Day19Test: StringSpec ({
                 .lines(),
         )
 
-        output shouldBe 62
+        output shouldBe 3472
     }
 })
