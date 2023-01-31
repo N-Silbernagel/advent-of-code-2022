@@ -64,7 +64,7 @@ object Day20 {
 
 private data class Number(val value: Long, val initialIndex: Int)
 
-private class CyclicList<E>() : MutableList<E> {
+private class CyclicList<E> : MutableList<E> {
     val internalList: MutableList<E> = mutableListOf()
 
     override val size: Int

@@ -34,31 +34,27 @@ object Day17 {
         while (fallenRocks.size < numberOfRocks) {
             val (jetDirection, jetIndex) = jetMovements.next()
 
-
-
-            val currentHighestPoint = calculateHighestPoint(fallenRocks)
-            val groupBy = fallenRocks.groupBy { it.position.x }
-            val sortedByDescending = groupBy
-                .entries
-                .sortedBy { it.key }
-            val map = sortedByDescending
-                .map { pointList -> pointList.value.maxBy { point -> point.position.y + point.height } }
-            val ceiling = map
-                .let {
-                    it.map { point -> currentHighestPoint - (point.position.y + point.height) }
-                }
-
-            currentState = State(currentRock::class, jetIndex, ceiling)
-            if (seen.contains(currentState)) {
-                cycleStart = currentState
-                break
-            }
-            seen[currentState] = fallenRocks.size to currentHighestPoint
-
-
-
             if (fallenRocks.contains(currentRock)) {
+                val currentHighestPoint = calculateHighestPoint(fallenRocks)
                 currentRock = rockSource.next(Vector2d(2, currentHighestPoint + 3))
+
+                val groupBy = fallenRocks.groupBy { it.position.x }
+                val sortedByDescending = groupBy
+                    .entries
+                    .sortedBy { it.key }
+                val map = sortedByDescending
+                    .map { pointList -> pointList.value.maxBy { point -> point.position.y + point.height } }
+                val ceiling = map
+                    .let {
+                        it.map { point -> currentHighestPoint - (point.position.y + point.height) }
+                    }
+
+                currentState = State(currentRock::class, jetIndex, ceiling)
+                if (seen.contains(currentState)) {
+                    cycleStart = currentState
+                    break
+                }
+                seen[currentState] = fallenRocks.size to currentHighestPoint
             }
 
             val isCollisionVertical = checkCollisionMany(currentRock, fallenRocks, jetDirection.vector)
