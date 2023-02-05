@@ -1,6 +1,6 @@
 import kotlin.math.abs
 
-interface Position2d {
+interface Position2d: Comparable<Position2d> {
     val x: Int
     val y: Int
 
